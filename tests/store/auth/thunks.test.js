@@ -1,8 +1,25 @@
-import { singInWithGoogle } from "../../../src/firebase/providers";
+import {
+  logoutFirebase,
+  loginWithEmailPassword,
+  registerUserWithEmailPassword,
+  singInWithGoogle,
+} from "../../../src/firebase/providers";
 import { checkingCredentials, login, logout } from "../../../src/store/auth";
-import { checkingAuthentication, startGoogleSingIn } from "../../../src/store/auth/thunks";
-import { demoUser } from "../../fixtures/authFixtures";
+import {
+  checkingAuthentication,
+  startCreatingUserWithEmailPassword,
+  startGoogleSingIn,
+  startLoginWithEmailPassword,
+  startLogout,
+} from "../../../src/store/auth/thunks";
+import { clearNotesLogout } from "../../../src/store/journal/journalSlice";
+import {
+  demoUser,
+  demoUserWithEmailPassword,
+} from "../../fixtures/authFixtures";
+
 jest.mock("../../../src/firebase/providers");
+
 describe("pruebas en authThunks", () => {
   const dispatch = jest.fn();
   beforeEach(() => jest.clearAllMocks());
@@ -16,24 +33,53 @@ describe("pruebas en authThunks", () => {
     expect(dispatch).toHaveBeenCalledWith(checkingCredentials());
   });
 
-  test('startGoogleSingIn debe de llamar checkingCredential y login', async() => { 
-    const loginDate = {ok: true, ...demoUser}
-    await singInWithGoogle.mockResolvedValue(loginDate)
+  test("startGoogleSingIn debe de llamar checkingCredential y login", async () => {
+    const loginData = { ok: true, ...demoUser };
+    await singInWithGoogle.mockResolvedValue(loginData);
 
     //este es nuestro thunk
     await startGoogleSingIn()(dispatch);
-    expect(dispatch).toHaveBeenCalledWith(checkingCredentials())
-    expect(dispatch).toHaveBeenCalledWith(login(loginDate))
-   })
+    expect(dispatch).toHaveBeenCalledWith(checkingCredentials());
+    expect(dispatch).toHaveBeenCalledWith(login(loginData));
+  });
 
-
-   test('startGoogleSingIn debe de llamar checkingCredential y loguot', async() => { 
-    const loginDate = {ok: false, errorMessage: 'Un error en google'}
-    await singInWithGoogle.mockResolvedValue(loginDate)
+  test("startGoogleSingIn debe de llamar checkingCredential y loguot", async () => {
+    const loginData = { ok: false, errorMessage: "Un error en google" };
+    await singInWithGoogle.mockResolvedValue(loginData);
 
     //este es nuestro thunk
     await startGoogleSingIn()(dispatch);
-    expect(dispatch).toHaveBeenCalledWith(checkingCredentials())
-    expect(dispatch).toHaveBeenCalledWith(logout(loginDate.errorMessage))
-   })
+    expect(dispatch).toHaveBeenCalledWith(checkingCredentials());
+    expect(dispatch).toHaveBeenCalledWith(logout(loginData.errorMessage));
+  });
+
+  test("startCreatingUserWithEmailPassword debe de llamar checkingCredentials y login", async () => {
+    const loginData = { ok: true, ...demoUserWithEmailPassword };
+
+    let formData = {
+      displayName: demoUser.displayName,
+      email: demoUser.email,
+      password: demoUser.password,
+    };
+
+    await registerUserWithEmailPassword.mockResolvedValue(loginData);
+    await startCreatingUserWithEmailPassword(formData)(dispatch);
+    expect(dispatch).toHaveBeenCalledWith(checkingCredentials());
+
+    formData = { ...formData, uid: demoUser.uid, photoURL: demoUser.photoURL };
+    expect(dispatch).toHaveBeenCalledWith(login(formData));
+  });
+
+  test("startLoginWithEmailPassword debe de llamar checkingCredentials y login - Exito", async () => {
+    const loginData = { ok: true, ...demoUser };
+    const formData = { email: demoUser.email, password: "123456" };
+
+    await loginWithEmailPassword.mockResolvedValue(loginData);
+
+    await startLoginWithEmailPassword(formData)(dispatch);
+
+    expect(dispatch).toHaveBeenCalledWith(checkingCredentials());
+    expect(dispatch).toHaveBeenCalledWith(login(loginData));
+  });
+
 });

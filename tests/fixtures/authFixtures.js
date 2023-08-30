@@ -31,3 +31,9 @@ export const demoUser = {
   displayName: "Jessi Mora",
   photoURL: "https://demo.jpg",
 };
+
+export const demoUserWithEmailPassword= {
+  uid: "123ABC",
+  photoURL: "https://demo.jpg",
+  errorMessage: null,
+};
